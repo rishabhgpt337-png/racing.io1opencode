@@ -9,7 +9,7 @@ import { Room } from './room.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PORT = Number(process.env.PORT) || 3000;
+const DEFAULT_PORT = 3100;
 
 const app = express();
 app.disable('x-powered-by');
@@ -313,11 +313,49 @@ function gameLoop() {
   loopTimer = setTimeout(gameLoop, Math.max(0, nextTickAt - performance.now()));
 }
 
-httpServer.listen(PORT, () => {
-  console.log(`Apex Rift listening on http://localhost:${PORT}`);
-  nextTickAt = performance.now() + TICK_MS;
-  gameLoop();
-});
+const configuredPort = Number(process.env.PORT) || DEFAULT_PORT;
+let serverStarted = false;
+
+function startListening(port, attempts = 0) {
+  const onListening = () => {
+    httpServer.off('listening', onListening);
+    httpServer.off('error', onError);
+
+    // A retried listen can leave a stale callback behind; only start once.
+    if (serverStarted) return;
+    serverStarted = true;
+
+    const address = httpServer.address();
+    const activePort = typeof address === 'object' && address ? address.port : port;
+    console.log(`Apex Rift is ready at http://localhost:${activePort}`);
+    console.log('Open that URL in two browser tabs to play with a friend.');
+    nextTickAt = performance.now() + TICK_MS;
+    gameLoop();
+  };
+
+  const onError = (error) => {
+    httpServer.off('listening', onListening);
+    httpServer.off('error', onError);
+
+    if (error.code === 'EADDRINUSE' && attempts < 10) {
+      const nextPort = port + 1;
+      console.warn(
+        `Port ${port} is already in use. Trying http://localhost:${nextPort} instead...`
+      );
+      setImmediate(() => startListening(nextPort, attempts + 1));
+      return;
+    }
+
+    console.error(`Could not start Apex Rift: ${error.message}`);
+    process.exit(1);
+  };
+
+  httpServer.once('listening', onListening);
+  httpServer.once('error', onError);
+  httpServer.listen(port);
+}
+
+startListening(configuredPort);
 
 function shutdown(signal) {
   if (shuttingDown) return;

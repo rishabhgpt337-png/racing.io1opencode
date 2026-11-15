@@ -17,15 +17,15 @@ npm install
 npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in two tabs (or two devices on the same LAN). Create a room in one tab, enter the four-digit code in the other, then start the race as host.
+Open [http://localhost:3100](http://localhost:3100) in two tabs (or two devices on the same LAN). Create a room in one tab, enter the four-digit code in the other, then start the race as host.
 
-If port 3000 is already in use:
+If port 3100 is already in use, the server automatically tries the next port and prints the correct URL in the terminal. You can also choose one explicitly:
 
 ```powershell
-$env:PORT=3100; npm start
+$env:PORT=3200; npm start
 ```
 
-On macOS/Linux, use `PORT=3100 npm start`.
+On macOS/Linux, use `PORT=3200 npm start`.
 
 Development mode with automatic server restarts:
 
@@ -41,7 +41,19 @@ npm test
 
 ### LAN play
 
-The server binds all interfaces by default. Find your machine's IPv4 address and open `http://YOUR-LAN-IP:3000` from the other device. Allow port 3000 through the local firewall if necessary. A 4-digit code is only a room identifier; use HTTPS and real authentication for public deployment.
+The server binds all interfaces by default. Find your machine's IPv4 address and open `http://YOUR-LAN-IP:3100` from the other device. Allow the printed port through the local firewall if necessary. A 4-digit code is only a room identifier; use HTTPS and real authentication for public deployment.
+
+### Play from the internet
+
+The GitHub repository page only shows source code. GitHub Pages cannot run this game because multiplayer requires the Node.js/Socket.io server. Either keep the server running on your machine, or deploy it to a Node host.
+
+A Render blueprint is included:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rishabhgpt337-png/racing.io1opencode)
+
+Render gives you a public `https://…onrender.com` URL. It supports WebSockets. Free instances sleep when idle, so the first load can take a few seconds. The included `render.yaml` sets `NODE_ENV=production`, and Render supplies `PORT` automatically.
+
+Alternatives that support persistent WebSockets: Railway, Fly.io, a VPS, or any Node host. Serverless platforms that do not support long-lived WebSocket connections are not suitable.
 
 ## Controls
 
